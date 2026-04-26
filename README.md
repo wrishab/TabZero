@@ -22,8 +22,11 @@ No dashboards. No clutter. Just one action that works.
 ![Dashboard UI](https://github.com/user-attachments/assets/ab9a297b-44ab-4471-8d1a-7e9ccc215ac3)
 
 ### 🧼 Organized Tabs
-
-![Grouped Tabs](https://github.com/user-attachments/assets/b3847ead-6ab2-4924-ad4c-a328be610a5a)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/d41d047e-e43d-44d1-bae7-e39f4e550e98" width="45%" />
+   &nbsp;&nbsp
+  <img src="https://github.com/user-attachments/assets/f846e29c-439b-440b-b5ed-8464a1e4e052" width="45%" />
+</p>
 
 ---
 
