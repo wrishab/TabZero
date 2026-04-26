@@ -14,21 +14,23 @@ TabZero is a minimal Chrome extension that organizes your messy tabs instantly.
 No dashboards. No clutter. Just one action that works.
 
 ---
+## 📸 Preview
+
+### 🧩 Extension Interface
+
+![Main UI](https://github.com/user-attachments/assets/0dd57a0c-d753-4c0f-8a6b-995242e1ff88)
+![Dashboard UI](https://github.com/user-attachments/assets/ab9a297b-44ab-4471-8d1a-7e9ccc215ac3)
+
+### 🧼 Organized Tabs
+
+![Grouped Tabs](https://github.com/user-attachments/assets/b3847ead-6ab2-4924-ad4c-a328be610a5a)
+
+---
 
 ## ✨ What it does
 
 * ⚡ **One-click cleanup**
   Group all open tabs instantly
-
-* 🧠 **Simple grouping**
-
-  * Study
-  * Work
-  * Social
-  * Entertainment
-
-* 🧹 **Removes duplicates**
-  Closes identical tabs automatically
 
 ---
 
