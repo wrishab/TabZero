@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "TabZero: AI Tab Manager",
+  "version": "1.0.1",
+  "description": "Clear your digital space. Instantly clean, group, and save tabs for deep focus.",
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "tabGroups"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "TabZero",
+  "description": "A browser extension prototype for instantly cleaning, organizing, and saving messy tabs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
