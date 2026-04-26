@@ -18,15 +18,15 @@ No dashboards. No clutter. Just one action that works.
 
 ### 🧩 Extension Interface
 
-![Main UI](https://github.com/user-attachments/assets/0dd57a0c-d753-4c0f-8a6b-995242e1ff88)
-![Dashboard UI](https://github.com/user-attachments/assets/ab9a297b-44ab-4471-8d1a-7e9ccc215ac3)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/5e088ee2-7ae6-4b26-8568-f4f4f3c407e3" width="45%" />
+   &nbsp;&nbsp
+  <img src="https://github.com/user-attachments/assets/b3d5c36e-9c47-4b42-a4af-6aa36640b218" width="45%" />
+</p>
 
 ### 🧼 Organized Tabs
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/d41d047e-e43d-44d1-bae7-e39f4e550e98" width="45%" />
-   &nbsp;&nbsp
-  <img src="https://github.com/user-attachments/assets/f846e29c-439b-440b-b5ed-8464a1e4e052" width="45%" />
-</p>
+
+![Tabs](https://github.com/user-attachments/assets/a5498974-7ff7-4ef0-9815-975cf8846f0e)
 
 ---
 
