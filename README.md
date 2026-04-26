@@ -30,10 +30,12 @@ No dashboards. No clutter. Just one action that works.
 
 ---
 
-## ✨ What it does
+## ✨ Features
 
-* ⚡ **One-click cleanup**
-  Group all open tabs instantly
+- ⚡ One-click tab cleanup  
+- 🧠 Smart, simple grouping (Study, Work, Social, Entertainment)  
+- 🧹 Removes duplicate tabs  
+- 🎯 Distraction-free experience  
 
 ---
 
