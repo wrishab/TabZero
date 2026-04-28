@@ -44,7 +44,7 @@ No dashboards. No clutter. Just one action that works.
 1. Open TabZero in Extension
 2. Click the Switch to **Organize**
 3. Done — your tabs are organize
-4. 
+
 ---
 
 ## Technologies Used
