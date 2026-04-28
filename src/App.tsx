@@ -9,7 +9,8 @@ import {
   Save,
   History,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  X
 } from 'lucide-react';
 
 // --- TYPES ---
@@ -37,6 +38,8 @@ export default function App() {
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [showToast, setShowToast] = useState('');
   const [showTabs, setShowTabs] = useState(false);
+  const [showClearPicker, setShowClearPicker] = useState(false);
+  const [selectedClearTabIds, setSelectedClearTabIds] = useState<Set<string>>(new Set());
   const [organizedGroups, setOrganizedGroups] = useState<Record<string, { id: number, title: string, color: any }>>({});
 
   // Chrome Extension Initialization
@@ -116,6 +119,48 @@ export default function App() {
       chrome.storage.local.set({ tabZeroSessions: updatedSessions });
     }
     setShowToast('💾 Session saved');
+  };
+
+  const handleClearOthers = (specificIds?: string[]) => {
+    const chrome = (window as any).chrome;
+    if (chrome && chrome.tabs) {
+      if (specificIds) {
+        // Clear manually selected tabs
+        const ids = specificIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+        if (ids.length > 0) {
+          chrome.tabs.remove(ids);
+          setShowToast(`🧹 Cleared ${ids.length} selected tabs`);
+          setSelectedClearTabIds(new Set());
+          setShowClearPicker(false);
+        }
+      } else {
+        // Default: Clear all other tabs
+        chrome.tabs.query({ active: false, currentWindow: true }, (tabsToClose: any[]) => {
+          const ids = tabsToClose.map(t => t.id).filter(id => id !== undefined);
+          if (ids.length > 0) {
+            chrome.tabs.remove(ids);
+            setShowToast(`🧹 Cleared ${ids.length} other tabs`);
+          }
+        });
+      }
+      
+      // Update state in either case
+      setTimeout(() => {
+        chrome.tabs.query({}, (chromeTabs: any[]) => {
+          const formattedTabs: Tab[] = chromeTabs.map(t => ({
+            id: String(t.id),
+            title: t.title || 'Untitled',
+            url: t.url || '',
+            category: categorizeTab(t.url || '', t.title || ''),
+            favicon: t.favIconUrl || '🌐',
+            pinned: t.pinned || false
+          }));
+          setTabs(formattedTabs.filter(t => !t.url.startsWith('chrome://')));
+        });
+      }, 200);
+    } else {
+      setShowToast('Clear only works in extension mode');
+    }
   };
 
   const handleRestoreSession = (session: Session) => {
@@ -310,10 +355,10 @@ export default function App() {
             className="mb-8"
           >
             <h1 className="text-3xl font-extrabold text-white tracking-tightest mb-2 leading-tight">
-              Clean your tabs in 1 click
+              Organize in a click
             </h1>
             <p className="text-slate-500 text-base font-medium leading-relaxed">
-              Instantly group your tabs and remove duplicates.
+              Smart AI grouping. Zero clutter.
             </p>
           </motion.div>
 
@@ -363,11 +408,91 @@ export default function App() {
               </div>
             </motion.button>
 
+            <div className="relative w-full flex flex-col items-center">
+              <div className="flex items-center gap-2 w-full max-w-[240px]">
+                <motion.button 
+                  onClick={() => handleClearOthers()}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 mt-4 flex items-center justify-center gap-2.5 px-6 py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl font-bold text-xs border border-rose-500/30 transition-all shadow-lg shadow-rose-500/5 group/clear"
+                >
+                  <X size={14} className="opacity-70 group-hover/clear:opacity-100 transition-opacity" />
+                  Clear All Others
+                </motion.button>
+                <motion.button
+                  onClick={() => setShowClearPicker(!showClearPicker)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`mt-4 p-3 rounded-xl border transition-all ${
+                    showClearPicker 
+                    ? 'bg-rose-500 text-white border-rose-500' 
+                    : 'bg-white/[0.03] text-slate-500 border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${showClearPicker ? 'rotate-180' : ''}`} />
+                </motion.button>
+              </div>
+
+              <AnimatePresence>
+                {showClearPicker && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="absolute top-full mt-2 w-full max-w-[280px] glass-card rounded-2xl shadow-2xl p-4 z-40 border border-white/10"
+                  >
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Manual Select</span>
+                      {selectedClearTabIds.size > 0 && (
+                        <button 
+                          onClick={() => handleClearOthers(Array.from(selectedClearTabIds))}
+                          className="text-[9px] font-black uppercase text-rose-400 hover:text-rose-300 transition-colors"
+                        >
+                          Clear ({selectedClearTabIds.size})
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="max-h-[200px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                      {tabs.map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            const next = new Set(selectedClearTabIds);
+                            if (next.has(tab.id)) next.delete(tab.id);
+                            else next.add(tab.id);
+                            setSelectedClearTabIds(next);
+                          }}
+                          className={`w-full flex items-center gap-3 p-2 rounded-lg transition-all text-left group ${
+                            selectedClearTabIds.has(tab.id) ? 'bg-rose-500/10' : 'hover:bg-white/[0.03]'
+                          }`}
+                        >
+                          <div className={`w-3.5 h-3.5 rounded border transition-all flex items-center justify-center shrink-0 ${
+                            selectedClearTabIds.has(tab.id) 
+                            ? 'bg-rose-500 border-rose-500 text-white' 
+                            : 'border-white/20 group-hover:border-white/40'
+                          }`}>
+                            {selectedClearTabIds.has(tab.id) && <X size={10} strokeWidth={4} />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-[10px] font-bold truncate ${selectedClearTabIds.has(tab.id) ? 'text-rose-400' : 'text-slate-300'}`}>
+                              {tab.title}
+                            </p>
+                            <p className="text-[8px] text-slate-600 truncate">{tab.url}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <motion.button 
               onClick={handleSaveSession}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="mt-4 flex items-center gap-3 px-6 py-3 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 rounded-xl font-bold text-xs border border-sky-500/30 transition-all shadow-lg shadow-sky-500/5 group/save"
+              className="mt-2 flex items-center gap-3 px-6 py-3 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 rounded-xl font-bold text-xs border border-sky-500/30 transition-all shadow-lg shadow-sky-500/5 group/save"
             >
               <Save size={16} className="opacity-70 group-hover/save:opacity-100 transition-opacity" />
               Save Current Session
