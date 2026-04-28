@@ -33,7 +33,7 @@ No dashboards. No clutter. Just one action that works.
 ## ✨ Features
 
 - ⚡ One-click tab cleanup  
-- 🧠 Smart, simple grouping (Study, Work, Social, Entertainment)  
+- 🧠 Smart, simple grouping (Study, Work, Social, Entertainment etc)  
 - 🧹 Removes duplicate tabs  
 - 🎯 Distraction-free experience  
 
@@ -41,10 +41,10 @@ No dashboards. No clutter. Just one action that works.
 
 ## 🚀 How to use
 
-1. Open TabZero
-2. Click **Clean & Organize**
-3. Done — your tabs are clean
-
+1. Open TabZero in Extension
+2. Click the Switch to **Organize**
+3. Done — your tabs are organize
+4. 
 ---
 
 ## Technologies Used
