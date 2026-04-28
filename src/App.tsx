@@ -524,7 +524,7 @@ export default function App() {
                   <div className="mb-4">
                     <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-2 text-left">Active Workspace</p>
 
-                    <div className="glass-card rounded-[20px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[240px] overflow-y-auto">
+                    <div className="glass-card rounded-[20px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[240px] overflow-y-auto custom-scrollbar">
                       <div className="divide-y divide-white/[0.03]">
                         {!isOrganized ? (
                           tabs.map((tab: Tab) => (
@@ -626,7 +626,7 @@ export default function App() {
             {sessions.length > 0 && (
               <div className="w-full mt-6">
                 <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-2 text-left">Saved Sessions</p>
-                <div className="glass-card rounded-[20px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[200px] overflow-y-auto">
+                <div className="glass-card rounded-[20px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[200px] overflow-y-auto custom-scrollbar">
                   {sessions.map(session => (
                     <div key={session.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-all group">
                       <div className="flex-1 min-w-0">
