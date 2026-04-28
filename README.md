@@ -19,9 +19,9 @@ No dashboards. No clutter. Just one action that works.
 ### 🧩 Extension Interface
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5e088ee2-7ae6-4b26-8568-f4f4f3c407e3" width="45%" />
+  <img src="https://github.com/user-attachments/assets/c1f06e1c-877a-4990-96ac-0828b8c952d3" width="45%" />
    &nbsp;&nbsp
-  <img src="https://github.com/user-attachments/assets/b3d5c36e-9c47-4b42-a4af-6aa36640b218" width="45%" />
+  <img src="https://github.com/user-attachments/assets/5fe7f980-f6f2-4bac-892f-feda36ff3f33" width="45%" />
 </p>
 
 ### 🧼 Organized Tabs
