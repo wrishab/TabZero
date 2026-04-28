@@ -8,6 +8,7 @@ import {
   Globe,
   Save,
   History,
+  Edit2,
   ChevronDown,
   ChevronUp,
   X
@@ -30,6 +31,21 @@ type Session = {
   date: string;
 };
 
+const CHROME_COLORS = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'] as const;
+type ChromeColor = typeof CHROME_COLORS[number];
+
+const UI_PALETTE: Record<ChromeColor, { bg: string, border: string, text: string, textHover: string, dot: string, hex: string }> = {
+  grey: { bg: 'hover:bg-[#64748b]/10 hover:border-l-[#64748b]/50', border: 'border-l-[#64748b]/50', text: 'text-[#94a3b8]', textHover: 'group-hover:text-[#94a3b8]', dot: 'bg-[#64748b]', hex: '#64748b' },
+  blue: { bg: 'hover:bg-[#3b82f6]/10 hover:border-l-[#3b82f6]/50', border: 'border-l-[#3b82f6]/50', text: 'text-[#60a5fa]', textHover: 'group-hover:text-[#60a5fa]', dot: 'bg-[#3b82f6]', hex: '#3b82f6' },
+  red: { bg: 'hover:bg-[#ef4444]/10 hover:border-l-[#ef4444]/50', border: 'border-l-[#ef4444]/50', text: 'text-[#f87171]', textHover: 'group-hover:text-[#f87171]', dot: 'bg-[#ef4444]', hex: '#ef4444' },
+  yellow: { bg: 'hover:bg-[#eab308]/10 hover:border-l-[#eab308]/50', border: 'border-l-[#eab308]/50', text: 'text-[#facc15]', textHover: 'group-hover:text-[#facc15]', dot: 'bg-[#eab308]', hex: '#eab308' },
+  green: { bg: 'hover:bg-[#22c55e]/10 hover:border-l-[#22c55e]/50', border: 'border-l-[#22c55e]/50', text: 'text-[#4ade80]', textHover: 'group-hover:text-[#4ade80]', dot: 'bg-[#22c55e]', hex: '#22c55e' },
+  pink: { bg: 'hover:bg-[#ec4899]/10 hover:border-l-[#ec4899]/50', border: 'border-l-[#ec4899]/50', text: 'text-[#f472b6]', textHover: 'group-hover:text-[#f472b6]', dot: 'bg-[#ec4899]', hex: '#ec4899' },
+  purple: { bg: 'hover:bg-[#a855f7]/10 hover:border-l-[#a855f7]/50', border: 'border-l-[#a855f7]/50', text: 'text-[#c084fc]', textHover: 'group-hover:text-[#c084fc]', dot: 'bg-[#a855f7]', hex: '#a855f7' },
+  cyan: { bg: 'hover:bg-[#06b6d4]/10 hover:border-l-[#06b6d4]/50', border: 'border-l-[#06b6d4]/50', text: 'text-[#22d3ee]', textHover: 'group-hover:text-[#22d3ee]', dot: 'bg-[#06b6d4]', hex: '#06b6d4' },
+  orange: { bg: 'hover:bg-[#f97316]/10 hover:border-l-[#f97316]/50', border: 'border-l-[#f97316]/50', text: 'text-[#fb923c]', textHover: 'group-hover:text-[#fb923c]', dot: 'bg-[#f97316]', hex: '#f97316' },
+};
+
 export default function App() {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [originalTabs, setOriginalTabs] = useState<Tab[]>([]);
@@ -40,6 +56,8 @@ export default function App() {
   const [showTabs, setShowTabs] = useState(false);
   const [showClearPicker, setShowClearPicker] = useState(false);
   const [selectedClearTabIds, setSelectedClearTabIds] = useState<Set<string>>(new Set());
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
   const [organizedGroups, setOrganizedGroups] = useState<Record<string, { id: number, title: string, color: any }>>({});
 
   // Chrome Extension Initialization
@@ -101,24 +119,59 @@ export default function App() {
       return;
     }
     
+    // Check for exact duplicate session (same URLs and pinned states)
+    const currentTabsFingerprint = tabs.map(t => `${t.url}|${!!t.pinned}`).join(',');
+    
+    const existingSessionIndex = sessions.findIndex(s => {
+      const sessionFingerprint = s.tabs.map(t => `${t.url}|${!!t.pinned}`).join(',');
+      return sessionFingerprint === currentTabsFingerprint;
+    });
+
     const now = new Date();
     const name = `Session ${now.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     
-    const newSession: Session = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name,
-      tabs: [...tabs],
-      date: now.toISOString()
-    };
+    let updatedSessions: Session[];
     
-    const updatedSessions = [newSession, ...sessions];
+    if (existingSessionIndex !== -1) {
+      // It's a duplicate. Remove the old one and put a "refreshed" version at top
+      const existingSession = sessions[existingSessionIndex];
+      const newSession: Session = {
+        ...existingSession,
+        date: now.toISOString()
+      };
+      
+      updatedSessions = [newSession, ...sessions.filter((_, i) => i !== existingSessionIndex)];
+      setShowToast('✨ Refreshed existing session');
+    } else {
+      // Truly new session
+      const newSession: Session = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name,
+        tabs: [...tabs],
+        date: now.toISOString()
+      };
+      updatedSessions = [newSession, ...sessions];
+      setShowToast('💾 Session saved');
+    }
+    
     setSessions(updatedSessions);
     
     const chrome = (window as any).chrome;
     if (chrome && chrome.storage && chrome.storage.local) {
       chrome.storage.local.set({ tabZeroSessions: updatedSessions });
     }
-    setShowToast('💾 Session saved');
+  };
+
+  const handleRenameSession = (id: string, newName: string) => {
+    const updatedSessions = sessions.map(s => s.id === id ? { ...s, name: newName } : s);
+    setSessions(updatedSessions);
+    setEditingSessionId(null);
+    
+    const chrome = (window as any).chrome;
+    if (chrome && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ tabZeroSessions: updatedSessions });
+    }
+    setShowToast('✏️ Session renamed');
   };
 
   const handleClearOthers = (specificIds?: string[]) => {
@@ -228,12 +281,7 @@ export default function App() {
       
       // Calculate groups
       const unpinnedTabs = uniqueTabs.filter(t => !t.pinned);
-      const grouped = unpinnedTabs.reduce((acc, tab) => {
-        const categoryId = categorizeTab(tab.url, tab.title);
-        if (!acc[categoryId]) acc[categoryId] = [];
-        acc[categoryId].push(tab);
-        return acc;
-      }, {} as Record<string, Tab[]>);
+      const grouped = groupTabsByCategory(unpinnedTabs);
       
       // Sorting and limiting to top 5 categories
       const order = getCategoryOrder();
@@ -537,13 +585,8 @@ export default function App() {
                           ))
                         ) : (
                           (() => {
-                            const grouped = tabs.reduce((acc, tab) => {
-                              if (tab.pinned) return acc;
-                              const categoryId = categorizeTab(tab.url, tab.title);
-                              if (!acc[categoryId]) acc[categoryId] = [];
-                              acc[categoryId].push(tab);
-                              return acc;
-                            }, {} as Record<string, Tab[]>);
+                            const unpinned = tabs.filter(t => !t.pinned);
+                            const grouped = groupTabsByCategory(unpinned);
 
                             return (
                               <>
@@ -572,31 +615,31 @@ export default function App() {
                                         {organizedGroups[categoryId] ? (
                                           <div className="flex flex-col gap-2 w-full">
                                             <div className="flex items-center gap-2">
-                                              <div className={`w-1.5 h-1.5 rounded-full`} style={{ backgroundColor: organizedGroups[categoryId].color === 'grey' ? '#64748b' : organizedGroups[categoryId].color === 'cyan' ? '#06b6d4' : organizedGroups[categoryId].color }} />
+                                              <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: UI_PALETTE[organizedGroups[categoryId].color as ChromeColor]?.hex || UI_PALETTE.grey.hex }} />
                                               <input 
                                                 value={organizedGroups[categoryId].title}
                                                 onChange={(e) => handleUpdateGroup(categoryId, e.target.value, organizedGroups[categoryId].color)}
-                                                className="bg-transparent border-none text-[8px] font-black uppercase tracking-wider text-slate-300 focus:outline-none focus:text-white transition-colors flex-1"
+                                                className="bg-transparent border-none text-[10px] font-bold tracking-wider text-slate-300 focus:outline-none focus:text-white transition-colors flex-1"
                                                 placeholder="Group Name"
                                               />
-                                              <span className="text-[8px] text-slate-600 font-medium ml-auto">{groupTabs.length} tabs</span>
+                                              <span className="text-[9px] text-slate-600 font-medium ml-auto flex items-center justify-center bg-white/[0.03] px-2 py-0.5 rounded-full border border-white/[0.05]">{groupTabs.length} tabs</span>
                                             </div>
-                                            <div className="flex gap-1.5 ml-3.5">
-                                              {['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'].map(c => (
+                                            <div className="flex gap-1.5 ml-4">
+                                              {CHROME_COLORS.map(c => (
                                                 <button
                                                   key={c}
                                                   onClick={() => handleUpdateGroup(categoryId, organizedGroups[categoryId].title, c)}
-                                                  className={`w-2.5 h-2.5 rounded-full border ${organizedGroups[categoryId].color === c ? 'border-white' : 'border-transparent'} transition-all hover:scale-125`}
-                                                  style={{ backgroundColor: c === 'grey' ? '#64748b' : c === 'cyan' ? '#06b6d4' : c }}
+                                                  className={`w-2.5 h-2.5 rounded-full border ${organizedGroups[categoryId].color === c ? 'border-white scale-110 shadow-sm shadow-white/20' : 'border-transparent'} transition-all hover:scale-125`}
+                                                  style={{ backgroundColor: UI_PALETTE[c]?.hex }}
                                                 />
                                               ))}
                                             </div>
                                           </div>
                                         ) : (
                                           <>
-                                            <div className={`w-1.5 h-1.5 rounded-full bg-${getCategoryColor(categoryId)}-400`} />
-                                            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-300">{categoryId}</span>
-                                            <span className="text-[8px] text-slate-600 font-medium ml-auto">{groupTabs.length} tabs</span>
+                                            <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: UI_PALETTE[getCategoryColor(categoryId)]?.hex || UI_PALETTE.grey.hex }} />
+                                            <span className="text-[10px] font-bold tracking-wider text-slate-300">{categoryId}</span>
+                                            <span className="text-[9px] text-slate-600 font-medium ml-auto flex items-center justify-center bg-white/[0.03] px-2 py-0.5 rounded-full border border-white/[0.05]">{groupTabs.length} tabs</span>
                                           </>
                                         )}
                                       </div>
@@ -606,6 +649,7 @@ export default function App() {
                                         <TabRow 
                                           tab={tab} 
                                           onTogglePin={handleTogglePin} 
+                                          themeColor={(organizedGroups[categoryId]?.color as ChromeColor) || getCategoryColor(categoryId)}
                                         />
                                       </React.Fragment>
                                     ))}
@@ -629,11 +673,35 @@ export default function App() {
                 <div className="glass-card rounded-[20px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[200px] overflow-y-auto custom-scrollbar">
                   {sessions.map(session => (
                     <div key={session.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-all group">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{session.name}</p>
+                      <div className="flex-1 min-w-0 mr-4">
+                        {editingSessionId === session.id ? (
+                          <input 
+                            autoFocus
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onBlur={() => handleRenameSession(session.id, editingName)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleRenameSession(session.id, editingName);
+                              if (e.key === 'Escape') setEditingSessionId(null);
+                            }}
+                            className="w-full bg-white/10 border-none text-sm font-bold text-white focus:outline-none rounded px-1 py-0.5"
+                          />
+                        ) : (
+                          <p className="text-sm font-bold text-white truncate">{session.name}</p>
+                        )}
                         <p className="text-[10px] text-slate-500 uppercase tracking-wider">{session.tabs.length} tabs</p>
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                        <button 
+                          onClick={() => {
+                            setEditingSessionId(session.id);
+                            setEditingName(session.name);
+                          }} 
+                          className="p-2 text-slate-400 hover:bg-white/10 rounded-lg transition-all"
+                          title="Rename Session"
+                        >
+                          <Edit2 size={14} />
+                        </button>
                         <button 
                           onClick={() => handleRestoreSession(session)} 
                           className="p-2 text-sky-400 hover:bg-sky-400/10 rounded-lg transition-all"
@@ -708,31 +776,37 @@ export default function App() {
 // Sub-component for a tab row
 function TabRow({ 
   tab, 
-  onTogglePin
+  onTogglePin,
+  themeColor
 }: { 
   tab: Tab, 
-  onTogglePin: (id: string, currentlyPinned: boolean) => void
+  onTogglePin: (id: string, currentlyPinned: boolean) => void,
+  themeColor?: ChromeColor
 }) {
+  const colorScheme = themeColor ? UI_PALETTE[themeColor] : UI_PALETTE.grey;
+  
   return (
-    <div className="flex items-center gap-3 py-3 px-4 hover:bg-white/[0.04] transition-all group relative">
+    <div className={`flex items-center gap-4 py-2.5 px-4 transition-all group relative border-l-[3px] border-transparent ${
+      themeColor ? colorScheme.bg + ' ' + colorScheme.border : 'hover:bg-white/[0.04] hover:border-white/10'
+    }`}>
       <div className="w-5 h-5 flex items-center justify-center shrink-0">
         {tab.favicon.startsWith('http') || tab.favicon.startsWith('data:') ? (
-          <img src={tab.favicon} className="w-4 h-4 rounded-sm opacity-70 group-hover:opacity-100 transition-opacity" alt="" referrerPolicy="no-referrer" />
+          <img src={tab.favicon} className="w-4 h-4 rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" alt="" referrerPolicy="no-referrer" />
         ) : (
-          <Globe size={14} className="text-slate-600" />
+          <Globe size={14} className="text-slate-500 group-hover:text-slate-300 transition-colors" />
         )}
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-medium text-slate-300 truncate leading-tight group-hover:text-white transition-colors">{tab.title || 'Untitled'}</p>
-        <p className="text-[9px] text-slate-600 truncate">{tab.url}</p>
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <p className="text-[12px] font-medium text-slate-300 truncate leading-tight group-hover:text-white transition-colors">{tab.title || 'Untitled'}</p>
+        <p className={`text-[10px] truncate ${themeColor ? colorScheme.textHover : ''} ${!themeColor ? 'text-slate-600' : colorScheme.text + ' opacity-70 group-hover:opacity-100'}`}>{tab.url}</p>
       </div>
 
       <button 
         onClick={() => onTogglePin(tab.id, !!tab.pinned)}
-        className={`p-2 rounded-lg transition-all border shrink-0 ${
+        className={`p-2 rounded-xl transition-all border shrink-0 opacity-0 group-hover:opacity-100 ${
           tab.pinned 
-          ? 'text-sky-400 bg-sky-400/15 border-sky-400/30 active:bg-sky-400/25' 
-          : 'text-slate-500 bg-white/[0.03] border-white/[0.05] hover:text-slate-300 hover:bg-white/10 hover:border-white/20 active:bg-white/[0.05]'
+          ? 'text-sky-400 bg-sky-400/15 border-sky-400/30' 
+          : 'text-slate-500 bg-white/[0.03] border-white/[0.05] hover:text-slate-300 hover:bg-white/10 hover:border-white/20'
         }`}
         title={tab.pinned ? 'Unpin tab' : 'Pin tab'}
       >
@@ -743,6 +817,23 @@ function TabRow({
 }
 
 // --- HELPERS ---
+
+function groupTabsByCategory(tabsToGroup: Tab[]): Record<string, Tab[]> {
+  const groups: Record<string, Tab[]> = {};
+  tabsToGroup.forEach(tab => {
+    const category = categorizeTab(tab.url, tab.title);
+    if (!groups[category]) groups[category] = [];
+    groups[category].push(tab);
+  });
+
+  // If user already has developer category organized then all ai ones will be in developer category
+  if (groups['Developer'] && groups['AI']) {
+    groups['Developer'] = [...groups['Developer'], ...groups['AI']];
+    delete groups['AI'];
+  }
+  
+  return groups;
+}
 
 function categorizeTab(url: string, title?: string): string {
   if (!url) return 'Others';
@@ -756,25 +847,75 @@ function categorizeTab(url: string, title?: string): string {
   }
 
   const rules: Record<string, string[]> = {
+    'Developer': [
+      'github.com', 'gitlab.com', 'bitbucket.org', 'sourceforge.net', 'codeberg.org', 'replit.com', 
+      'codepen.io', 'jsfiddle.net', 'stackoverflow.com', 'stackexchange.com', 'dev.to', 'hashnode.com', 
+      'hackerrank.com', 'leetcode.com', 'codeforces.com', 'atcoder.jp', 'topcoder.com', 
+      'geeksforgeeks.org', 'hackerearth.com', 'codingame.com', 'freecodecamp.org', 
+      'developer.mozilla.org', 'w3schools.com', 'tutorialspoint.com', 'programiz.com', 
+      'codecademy.com', 'coursera.org', 'edx.org', 'udemy.com', 'pluralsight.com', 
+      'khanacademy.org', 'ocw.mit.edu', 'jetbrains.com', 'visualstudio.com', 'code.visualstudio.com', 
+      'postman.com', 'insomnia.rest', 'docker.com', 'kubernetes.io', 'terraform.io', 'ansible.com', 
+      'jenkins.io', 'netlify.com', 'vercel.com', 'heroku.com', 'firebase.google.com', 'supabase.com', 
+      'aws.amazon.com', 'cloud.google.com', 'azure.microsoft.com', 'digitalocean.com', 
+      'cloudflare.com', 'mongodb.com', 'redis.io', 'prisma.io', 'strapi.io', 'wordpress.org', 
+      'nextjs.org', 'react.dev', 'angular.io', 'vuejs.org', 'tailwindcss.com', 'npmjs.com', 
+      'pnpm.io', 'bun.sh', 'figma.com', 'trello.com', 'atlassian.net', 'asana.com', 'clickup.com', 
+      'notion.so', 'slack.com', 'discord.com', 'linear.app', 'sentry.io', 'stripe.com', 'auth0.com',
+      'localhost', 'npmtrends.com'
+    ],
     'Study': [
-      'github.com', 'gitlab.com', 'stackoverflow.com', 'react.dev', 'developer.mozilla.org', 
-      'leetcode.com', 'hackerrank.com', 'udemy.com', 'coursera.org', 'edx.org', 
-      'khanacademy.org', 'w3schools.com', 'freecodecamp.org', 'geeksforgeeks.org', 
-      'wikipedia.org', 'openai.com', 'chatgpt.com', 'claude.ai', 'gemini.google.com'
+      'wikipedia.org', 'researchgate.net', 'scholar.google.', 'byjus.com', 'unacademy.com'
+    ],
+    'AI': [
+      'openai.com', 'chatgpt.com', 'claude.ai', 'gemini.google.com', 'perplexity.ai', 'poe.com', 
+      'you.com', 'phind.com', 'jasper.ai', 'copy.ai', 'writesonic.com', 'rytr.me', 'grammarly.com', 
+      'quillbot.com', 'wordtune.com', 'sudowrite.com', 'midjourney.com', 'leonardo.ai', 
+      'stablediffusionweb.com', 'firefly.adobe.com', 'ideogram.ai', 'playgroundai.com', 
+      'runwayml.com', 'pictory.ai', 'synthesia.io', 'heygen.com', 'descript.com', 'luma.ai', 
+      'kaiber.ai', 'elevenlabs.io', 'murf.ai', 'play.ht', 'speechify.com', 'aiva.ai', 
+      'soundraw.io', 'boomy.com', 'codeium.com', 'tabnine.com', 'cursor.com', 'otter.ai', 
+      'fireflies.ai', 'mem.ai', 'taskade.com', 'tome.app', 'looka.com', 'uizard.io', 
+      'khroma.co', 'usegalileo.ai', 'durable.co', 'huggingface.co', 'stability.ai', 
+      'cohere.com', 'anthropic.com', 'replicate.com', 'pinecone.io', 'wandb.ai', 
+      'langchain.com', 'character.ai', 'reface.ai', 'remini.ai', 'cleanup.pictures', 
+      'clipdrop.co', 'remove.bg', 'letsenhance.io', 'rundiffusion.com', 'krea.ai', 
+      'scenario.com', 'dreamstudio.ai', 'promptbase.com', 'prompthero.com', 'futurepedia.io', 
+      'theresanaiforthat.com', 'lexica.art', 'mage.space', 'nightcafe.studio', 'artbreeder.com', 
+      'replika.ai', 'pi.ai', 'grok.com', 'bing.com/chat'
     ],
     'Work': [
-      'docs.google.com', 'drive.google.com', 'sheets.google.com', 'slides.google.com', 'notion.so', 
-      'figma.com', 'slack.com', 'trello.com', 'mail.google.com', 'outlook.live.com', 
-      'office.com', 'linear.app', 'jira.', 'asana.com', 'monday.com', 'airtable.com', 
-      'miro.com', 'zoom.us', 'meet.google.com'
+      'docs.google.com', 'drive.google.com', 'sheets.google.com', 'slides.google.com', 
+      'mail.google.com', 'outlook.live.com', 'office.com', 'monday.com', 'airtable.com', 
+      'miro.com', 'zoom.us', 'meet.google.com', 'teams.microsoft.com'
     ],
     'Entertainment': [
       'netflix.com', 'twitch.tv', 'vimeo.com', 'spotify.com', 'primevideo.', 'hulu.com', 
-      'disneyplus.com', 'soundcloud.com', 'imdb.com'
+      'disneyplus.com', 'soundcloud.com', 'hotstar.com', 'imdb.com'
     ],
     'Social': [
       'twitter.com', 'x.com', 'reddit.com', 'facebook.com', 'instagram.com', 'tiktok.com', 
-      'discord.com', 'web.whatsapp.com', 'telegram.org'
+      'discord.com', 'web.whatsapp.com', 'telegram.org', 'linkedin.com', 'snapchat.com', 'pinterest.com'
+    ],
+    'Shopping': [
+      'amazon.', 'ebay.', 'shopify.', 'walmart.com', 'aliexpress.', 'target.com', 'bestbuy.com', 
+      'etsy.com', 'flipkart.', 'myntra.', 'ajio.com', 'meesho.com', 'zara.com', 'hm.com', 'nike.com', 
+      'adidas.com', 'apple.com/shop', 'homedepot.com', 'shein.com', 'temu.com', 'wayfair.com', 
+      'costco.com', 'huckberry.com', 'shinesty.com', 'chewy.com', 'alibaba.com', 'lunya.co', 
+      'beardbrand.com', 'beckettsimonon.com'
+    ],
+    'News': [
+      'bbc.com', 'bbc.co.uk', 'ndtv.com', 'thehindu.com', 'cnn.com', 'news.google.', 'nytimes.com', 
+      'usatoday.com', 'foxnews.com', 'washingtonpost.com', 'apnews.com', 'nbcnews.com', 'wsj.com', 
+      'npr.org', 'newsbreak.com'
+    ],
+    'Travel': [
+      'maps.google.', 'google.com/maps', 'makemytrip.com', 'booking.com', 'airbnb.', 
+      'irctc.co.in', 'expedia.com', 'vrbo.com', 'tripadvisor.com', 'kayak.com'
+    ],
+    'Finance': [
+      'paypal.com', 'phonepe.com', 'pay.google.com', 'zerodha.com', 'coinbase.com', 'coindcx.com', 
+      'groww.in', 'angelone.in', 'upstox.com', 'schwab.com', 'fidelity.com', 'interactivebrokers.com'
     ]
   };
 
@@ -782,20 +923,71 @@ function categorizeTab(url: string, title?: string): string {
     if (domains.some(domain => l.includes(domain))) return category;
   }
 
+  // Extra keyword check for AI if no domain matched
+  const aiKeywords = ['ai', 'chatgpt', 'gemini', 'claude', 'perplexity', 'poe', 'gpt-4', 'gpt-4o', 'llama', 'mistral', 'stable diffusion', 'midjourney', 'copilot', 'artificial intelligence', 'machine learning', 'deep learning'];
+  if (aiKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'AI';
+
+  // Extra keyword check for developer if no domain matched
+  const developerKeywords = [
+    'api', 'github', 'code', 'deploy', 'debugger', 'console', 'repository', 'branch', 'pull request',
+    'docker', 'kubernetes', 'terraform', 'aws', 'cloud', 'database', 'sql', 'nosql', 'frontend', 
+    'backend', 'fullstack', 'framework', 'library', 'documentation', 'programming', 'software',
+    'jenkins', 'ci/cd', 'script', 'terminal', 'shell', 'npm', 'yarn', 'pnpm', 'bun'
+  ];
+  if (developerKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'Developer';
+
+  // Extra keyword check for travel if no domain matched
+  const travelKeywords = ['map', 'location', 'booking', 'hotel', 'flights', 'trip', 'vacation'];
+  if (travelKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'Travel';
+
+  // Extra keyword check for finance if no domain matched
+  const financeKeywords = ['bank', 'pay', 'wallet', 'crypto', 'mutual funds'];
+  if (financeKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'Finance';
+
+  // Extra keyword check for news if no domain matched
+  const newsKeywords = ['news', 'headlines', 'breaking'];
+  if (newsKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'News';
+
+  // Extra keyword check for entertainment if no domain matched
+  const entertainmentKeywords = ['video', 'music', 'stream', 'watch', 'play', 'movie', 'song', 'playlist', 'trailer', 'episode'];
+  if (entertainmentKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'Entertainment';
+
+  // Extra keyword check for social if no domain matched
+  const socialKeywords = ['chat', 'message', 'post', 'share', 'comment', 'dm', 'reel', 'story', 'profile', 'notification'];
+  if (socialKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'Social';
+
+  // Extra keyword check for work if no domain matched
+  const workKeywords = ['docs', 'meeting', 'mail', 'project', 'task', 'office', 'workspace', 'sprint', 'deadline', 'kanban'];
+  if (workKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'Work';
+
+  // Extra keyword check for study if no domain matched
+  const studyKeywords = ['lecture', 'tutorial', 'course', 'study', 'notes', 'research', 'coding', 'assignment', 'exam', 'pdf', 'syllabus', 'textbook'];
+  if (studyKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'Study';
+
+  // Extra keyword check for shopping if no domain matched
+  const shoppingKeywords = ['buy', 'cart', 'checkout', 'order', 'deal', 'discount', 'offer', 'wishlist', 'payment', 'shop'];
+  if (shoppingKeywords.some(kw => l.includes(kw) || t.includes(kw))) return 'Shopping';
+
   return 'Others';
 }
 
-function getCategoryColor(category: string): 'blue' | 'cyan' | 'green' | 'grey' | 'orange' | 'pink' | 'purple' | 'red' | 'yellow' {
-  const colors: Record<string, string> = {
+function getCategoryColor(category: string): ChromeColor {
+  const colors: Record<string, ChromeColor> = {
     'Study': 'green',
     'Work': 'blue',
     'Entertainment': 'red',
     'Social': 'pink',
+    'Shopping': 'orange',
+    'News': 'cyan',
+    'Finance': 'yellow',
+    'Developer': 'grey',
+    'Travel': 'cyan',
+    'AI': 'purple',
     'Others': 'grey'
   };
-  return (colors[category] || 'grey') as any;
+  return colors[category] || 'grey';
 }
 
 function getCategoryOrder(): string[] {
-  return ['Study', 'Work', 'Social', 'Entertainment', 'Others'];
+  return ['AI', 'Developer', 'Study', 'Work', 'Social', 'News', 'Finance', 'Travel', 'Shopping', 'Entertainment', 'Others'];
 }
