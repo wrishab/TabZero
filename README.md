@@ -26,7 +26,7 @@ No dashboards. No clutter. Just one action that works.
 
 ### 🧼 Organized Tabs
 
-![Tabs](https://github.com/user-attachments/assets/a5498974-7ff7-4ef0-9815-975cf8846f0e)
+![Tabs](https://github.com/user-attachments/assets/9660d88b-15a6-4f13-bb64-58f0c407734b)
 
 ---
 
