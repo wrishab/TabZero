@@ -454,7 +454,7 @@ export default function App() {
               disabled={isOrganizing}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`group relative flex items-center h-[72px] w-[240px] rounded-full p-2 transition-all duration-500 overflow-hidden shadow-2xl ${
+              className={`group relative flex items-center h-[72px] w-[300px] rounded-full p-2 transition-all duration-500 overflow-hidden shadow-2xl ${
                 isOrganized 
                 ? 'bg-emerald-500 shadow-emerald-500/20' 
                 : 'bg-white/[0.05] border border-white/10 shadow-black/40'
@@ -463,7 +463,7 @@ export default function App() {
               {/* Handle */}
               <motion.div
                 className="h-[56px] w-[56px] bg-white rounded-full shadow-xl flex items-center justify-center relative z-20 shrink-0"
-                animate={{ x: isOrganized ? 168 : 0 }}
+                animate={{ x: isOrganized ? 228 : 0 }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               >
                 {isOrganizing ? (
@@ -490,7 +490,7 @@ export default function App() {
             </motion.button>
 
             <div className="relative w-full flex flex-col items-center">
-              <div className="flex items-center gap-2 w-full max-w-[240px]">
+              <div className="flex items-center gap-2 w-full max-w-[300px]">
                 <motion.button 
                   onClick={() => handleClearOthers()}
                   whileHover={{ scale: 1.02 }}
@@ -520,7 +520,7 @@ export default function App() {
                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    className="absolute top-full mt-2 w-full max-w-[280px] glass-card rounded-2xl shadow-2xl p-4 z-40 border border-white/10"
+                    className="absolute top-full mt-2 w-full max-w-[300px] glass-card rounded-2xl shadow-2xl p-4 z-40 border border-white/10"
                   >
                     <div className="flex items-center justify-between mb-3 px-1">
                       <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Manual Select</span>
