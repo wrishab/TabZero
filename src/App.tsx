@@ -220,8 +220,8 @@ export default function App() {
           setShowClearPicker(false);
         }
       } else {
-        // Default: Clear all other tabs
-        chrome.tabs.query({ active: false, currentWindow: true }, (tabsToClose: any[]) => {
+        // Default: Clear all other unpinned tabs
+        chrome.tabs.query({ active: false, currentWindow: true, pinned: false }, (tabsToClose: any[]) => {
           const ids = tabsToClose.map(t => t.id).filter(id => id !== undefined);
           if (ids.length > 0) {
             chrome.tabs.remove(ids);
@@ -535,7 +535,7 @@ export default function App() {
                     </div>
                     
                     <div className="max-h-[200px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
-                      {tabs.map(tab => (
+                      {tabs.filter(t => !t.pinned).map(tab => (
                         <button
                           key={tab.id}
                           onClick={() => {
