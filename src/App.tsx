@@ -630,17 +630,17 @@ export default function App() {
                                 {tabs.filter(t => t.pinned).length > 0 && (
                                   <div className="bg-white/[0.02] group/pinned border-b border-white/[0.03]">
                                     <div 
-                                      className="px-5 py-3 flex items-center justify-between hover:bg-white/[0.03] cursor-pointer transition-colors"
+                                      className="px-4 py-2.5 flex items-center justify-between hover:bg-white/[0.03] cursor-pointer transition-colors"
                                       onClick={() => toggleGroup('Pinned')}
                                     >
-                                      <div className="flex items-center gap-3">
-                                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/10">
-                                          <Pin size={14} className="fill-current" />
+                                      <div className="flex items-center gap-2.5">
+                                        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/10">
+                                          <Pin size={12} className="fill-current" />
                                         </div>
-                                        <span className="text-sm font-bold tracking-wider text-slate-300">Pinned</span>
-                                        <span className="text-xs text-slate-500 font-bold ml-1">{tabs.filter(t => t.pinned).length}</span>
+                                        <span className="text-xs font-bold tracking-wider text-slate-300">Pinned</span>
+                                        <span className="text-[10px] text-slate-500 font-bold ml-1">{tabs.filter(t => t.pinned).length}</span>
                                       </div>
-                                      <ChevronDown size={16} className={`text-slate-500 transition-transform duration-300 ${collapsedGroups['Pinned'] ? 'rotate-180' : ''}`} />
+                                      <ChevronDown size={14} className={`text-slate-500 transition-transform duration-300 ${collapsedGroups['Pinned'] ? 'rotate-180' : ''}`} />
                                     </div>
                                     <AnimatePresence initial={false}>
                                       {!collapsedGroups['Pinned'] && (
@@ -672,12 +672,12 @@ export default function App() {
                                   return (
                                     <div key={categoryId} className="group/group">
                                       <div 
-                                        className="px-5 py-3 flex items-center justify-between border-b border-white/[0.03] bg-white/[0.01] hover:bg-white/[0.03] cursor-pointer transition-colors group-hover/group:border-white/[0.05]"
+                                        className="px-4 py-2 flex items-center justify-between border-b border-white/[0.03] bg-white/[0.01] hover:bg-white/[0.03] cursor-pointer transition-colors group-hover/group:border-white/[0.05]"
                                         onClick={() => toggleGroup(categoryId)}
                                       >
-                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                          <div className={`flex items-center justify-center w-7 h-7 rounded-lg shadow-inner border border-white/5`} style={{ backgroundColor: uiColor.hex + '33', color: uiColor.hex }}>
-                                            {React.cloneElement(getCategoryIcon(organizedGroups[categoryId]?.title || categoryId), { size: 14 })}
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                          <div className={`flex items-center justify-center w-6 h-6 rounded-lg shadow-inner border border-white/5 shrink-0`} style={{ backgroundColor: uiColor.hex + '33', color: uiColor.hex }}>
+                                            {React.cloneElement(getCategoryIcon(organizedGroups[categoryId]?.title || categoryId), { size: 12 })}
                                           </div>
                                           
                                           {organizedGroups[categoryId] ? (
@@ -685,14 +685,14 @@ export default function App() {
                                               value={organizedGroups[categoryId].title}
                                               onClick={(e) => e.stopPropagation()}
                                               onChange={(e) => handleUpdateGroup(categoryId, e.target.value, organizedGroups[categoryId].color)}
-                                              className="bg-transparent border-none text-sm font-bold tracking-wider text-slate-300 focus:outline-none focus:text-white transition-colors min-w-[50px] w-auto max-w-[140px]"
+                                              className="bg-transparent border-none text-xs font-bold tracking-wider text-slate-300 focus:outline-none focus:text-white transition-colors min-w-[50px] w-auto max-w-[120px] truncate"
                                               placeholder="Group"
                                             />
                                           ) : (
-                                            <span className="text-sm font-bold tracking-wider text-slate-300">{categoryId}</span>
+                                            <span className="text-xs font-bold tracking-wider text-slate-300 truncate">{categoryId}</span>
                                           )}
                                           
-                                          <span className="text-xs text-slate-500 font-bold ml-1">{groupTabs.length}</span>
+                                          <span className="text-[10px] text-slate-500 font-bold ml-1">{groupTabs.length}</span>
                                         </div>
 
                                         <div 
@@ -728,7 +728,7 @@ export default function App() {
                                           )}
                                         </div>
 
-                                        <ChevronDown size={16} className={`text-slate-500 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+                                        <ChevronDown size={14} className={`text-slate-500 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''} shrink-0`} />
                                       </div>
 
                                       <AnimatePresence initial={false}>
@@ -888,19 +888,19 @@ function TabRow({
   const colorScheme = themeColor ? UI_PALETTE[themeColor] : UI_PALETTE.grey;
   
   return (
-    <div className={`flex items-center gap-4 py-3 px-5 transition-all group relative border-l-[3px] border-transparent ${
+    <div className={`flex items-center gap-3 py-2.5 px-4 transition-all group relative border-l-[3px] border-transparent ${
       themeColor ? colorScheme.bg + ' ' + colorScheme.border : 'hover:bg-white/[0.04] hover:border-white/10'
     }`}>
-      <div className="w-6 h-6 flex items-center justify-center shrink-0">
+      <div className="w-5 h-5 flex items-center justify-center shrink-0">
         {tab.favicon.startsWith('http') || tab.favicon.startsWith('data:') ? (
-          <img src={tab.favicon} className="w-5 h-5 rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" alt="" referrerPolicy="no-referrer" />
+          <img src={tab.favicon} className="w-4 h-4 rounded-sm opacity-80 group-hover:opacity-100 transition-opacity" alt="" referrerPolicy="no-referrer" />
         ) : (
-          <Globe size={16} className="text-slate-500 group-hover:text-slate-300 transition-colors" />
+          <Globe size={14} className="text-slate-500 group-hover:text-slate-300 transition-colors" />
         )}
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <p className="text-sm font-medium text-slate-300 truncate leading-tight group-hover:text-white transition-colors">{tab.title || 'Untitled'}</p>
-        <p className={`text-[11px] truncate ${themeColor ? colorScheme.textHover : ''} ${!themeColor ? 'text-slate-600' : colorScheme.text + ' opacity-70 group-hover:opacity-100'}`}>{tab.url}</p>
+        <p className="text-[12px] font-medium text-slate-300 truncate leading-tight group-hover:text-white transition-colors">{tab.title || 'Untitled'}</p>
+        <p className={`text-[10px] truncate ${themeColor ? colorScheme.textHover : ''} ${!themeColor ? 'text-slate-600' : colorScheme.text + ' opacity-70 group-hover:opacity-100'}`}>{tab.url}</p>
       </div>
 
       <button 
