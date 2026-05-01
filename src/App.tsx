@@ -214,7 +214,9 @@ export default function App() {
         // Clear manually selected tabs
         const ids = specificIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
         if (ids.length > 0) {
-          chrome.tabs.remove(ids);
+          chrome.tabs.remove(ids, () => {
+            setTabs(prev => prev.filter(t => !specificIds.includes(t.id)));
+          });
           setShowToast(`🧹 Cleared ${ids.length} selected tabs`);
           setSelectedClearTabIds(new Set());
           setShowClearPicker(false);
@@ -223,27 +225,15 @@ export default function App() {
         // Default: Clear all other unpinned tabs
         chrome.tabs.query({ active: false, currentWindow: true, pinned: false }, (tabsToClose: any[]) => {
           const ids = tabsToClose.map(t => t.id).filter(id => id !== undefined);
+          const idsStrings = ids.map(id => String(id));
           if (ids.length > 0) {
-            chrome.tabs.remove(ids);
+            chrome.tabs.remove(ids, () => {
+              setTabs(prev => prev.filter(t => !idsStrings.includes(t.id)));
+            });
             setShowToast(`🧹 Cleared ${ids.length} other tabs`);
           }
         });
       }
-      
-      // Update state in either case
-      setTimeout(() => {
-        chrome.tabs.query({}, (chromeTabs: any[]) => {
-          const formattedTabs: Tab[] = chromeTabs.map(t => ({
-            id: String(t.id),
-            title: t.title || 'Untitled',
-            url: t.url || '',
-            category: categorizeTab(t.url || '', t.title || ''),
-            favicon: t.favIconUrl || '🌐',
-            pinned: t.pinned || false
-          }));
-          setTabs(formattedTabs.filter(t => !t.url.startsWith('chrome://')));
-        });
-      }, 200);
     } else {
       setShowToast('Clear only works in extension mode');
     }
