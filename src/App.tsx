@@ -70,8 +70,10 @@ export default function App() {
   const [editingName, setEditingName] = useState('');
   const [organizedGroups, setOrganizedGroups] = useState<Record<string, { id: number, title: string, color: any }>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
 
   const toggleGroup = (categoryId: string) => {
+    if (activeColorPicker) return; // Prevent collapse when interacting with color picker
     setCollapsedGroups(prev => ({ ...prev, [categoryId]: !prev[categoryId] }));
   };
 
@@ -602,8 +604,8 @@ export default function App() {
                   {/* Active Tabs Review */}
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-3 ml-2">
-                       <LayoutGrid size={14} className="text-slate-400" />
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Active Workspace</p>
+                       <LayoutGrid size={16} className="text-slate-400" />
+                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-left">Active Workspace</p>
                     </div>
 
                     <div className="glass-card rounded-[24px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[320px] overflow-y-auto custom-scrollbar border border-white/5 shadow-2xl">
@@ -635,8 +637,8 @@ export default function App() {
                                         <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/10">
                                           <Pin size={12} className="fill-current" />
                                         </div>
-                                        <span className="text-[11px] font-bold tracking-wider text-slate-300">Pinned</span>
-                                        <span className="text-[9px] text-slate-500 font-bold ml-1">{tabs.filter(t => t.pinned).length}</span>
+                                        <span className="text-xs font-bold tracking-wider text-slate-300">Pinned</span>
+                                        <span className="text-[10px] text-slate-500 font-bold ml-1">{tabs.filter(t => t.pinned).length}</span>
                                       </div>
                                       <ChevronDown size={14} className={`text-slate-500 transition-transform duration-300 ${collapsedGroups['Pinned'] ? 'rotate-180' : ''}`} />
                                     </div>
@@ -683,28 +685,47 @@ export default function App() {
                                               value={organizedGroups[categoryId].title}
                                               onClick={(e) => e.stopPropagation()}
                                               onChange={(e) => handleUpdateGroup(categoryId, e.target.value, organizedGroups[categoryId].color)}
-                                              className="bg-transparent border-none text-[11px] font-bold tracking-wider text-slate-300 focus:outline-none focus:text-white transition-colors min-w-[50px] w-[80px]"
+                                              className="bg-transparent border-none text-xs font-bold tracking-wider text-slate-300 focus:outline-none focus:text-white transition-colors min-w-[50px] w-auto max-w-[120px]"
                                               placeholder="Group"
                                             />
                                           ) : (
-                                            <span className="text-[11px] font-bold tracking-wider text-slate-300">{categoryId}</span>
+                                            <span className="text-xs font-bold tracking-wider text-slate-300">{categoryId}</span>
                                           )}
                                           
-                                          <span className="text-[9px] text-slate-500 font-bold ml-1">{groupTabs.length}</span>
+                                          <span className="text-[10px] text-slate-500 font-bold ml-1">{groupTabs.length}</span>
                                         </div>
 
                                         <div 
-                                          className="flex items-center gap-1.5 opacity-0 group-hover/group:opacity-100 transition-all px-2"
+                                          className="flex items-center gap-1.5 transition-all px-2 relative"
                                           onClick={(e) => e.stopPropagation()}
                                         >
-                                          {organizedGroups[categoryId] && CHROME_COLORS.map(c => (
-                                            <button
-                                              key={c}
-                                              onClick={() => handleUpdateGroup(categoryId, organizedGroups[categoryId].title, c)}
-                                              className={`w-2.5 h-2.5 rounded-full border ${organizedGroups[categoryId].color === c ? 'border-white scale-110 shadow-sm shadow-white/20' : 'border-transparent hover:scale-110 hover:border-white/50'} transition-all`}
-                                              style={{ backgroundColor: UI_PALETTE[c]?.hex }}
-                                            />
-                                          ))}
+                                          {organizedGroups[categoryId] && (
+                                            <>
+                                              {activeColorPicker === categoryId ? (
+                                                <div className="flex gap-1.5 bg-slate-900 border border-white/10 shadow-xl px-2 py-1.5 rounded-full absolute right-8 top-1/2 -translate-y-1/2 z-50">
+                                                   <button onClick={() => setActiveColorPicker(null)} className="mr-1 text-slate-500 hover:text-white flex items-center justify-center shrink-0"><X size={12} /></button>
+                                                   {CHROME_COLORS.map(c => (
+                                                      <button
+                                                        key={c}
+                                                        onClick={() => {
+                                                          handleUpdateGroup(categoryId, organizedGroups[categoryId].title, c);
+                                                          setActiveColorPicker(null);
+                                                        }}
+                                                        className={`w-3 h-3 rounded-full border shrink-0 ${organizedGroups[categoryId].color === c ? 'border-white scale-110 shadow-sm shadow-white/20' : 'border-transparent hover:scale-110 hover:border-white/50'} transition-all`}
+                                                        style={{ backgroundColor: UI_PALETTE[c]?.hex }}
+                                                      />
+                                                   ))}
+                                                </div>
+                                              ) : (
+                                                <button
+                                                  onClick={() => setActiveColorPicker(categoryId)}
+                                                  className="opacity-0 group-hover/group:opacity-100 transition-all w-3 h-3 rounded-full border border-white/20 hover:border-white/50 shadow-sm mr-2 shrink-0"
+                                                  style={{ backgroundColor: UI_PALETTE[organizedGroups[categoryId].color as ChromeColor]?.hex || uiColor.hex }}
+                                                  title="Change color"
+                                                />
+                                              )}
+                                            </>
+                                          )}
                                         </div>
 
                                         <ChevronDown size={14} className={`text-slate-500 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
@@ -748,8 +769,8 @@ export default function App() {
             {sessions.length > 0 && (
               <div className="w-full mt-6">
                 <div className="flex items-center gap-2 mb-3 ml-2">
-                   <History size={14} className="text-slate-400" />
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Saved Sessions</p>
+                   <History size={16} className="text-slate-400" />
+                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-left">Saved Sessions</p>
                 </div>
                 <div className="glass-card rounded-[24px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[240px] overflow-y-auto custom-scrollbar border border-white/5 shadow-2xl">
                   {sessions.map(session => (
@@ -878,8 +899,8 @@ function TabRow({
         )}
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <p className="text-[12px] font-medium text-slate-300 truncate leading-tight group-hover:text-white transition-colors">{tab.title || 'Untitled'}</p>
-        <p className={`text-[10px] truncate ${themeColor ? colorScheme.textHover : ''} ${!themeColor ? 'text-slate-600' : colorScheme.text + ' opacity-70 group-hover:opacity-100'}`}>{tab.url}</p>
+        <p className="text-sm font-medium text-slate-300 truncate leading-tight group-hover:text-white transition-colors">{tab.title || 'Untitled'}</p>
+        <p className={`text-[11px] truncate ${themeColor ? colorScheme.textHover : ''} ${!themeColor ? 'text-slate-600' : colorScheme.text + ' opacity-70 group-hover:opacity-100'}`}>{tab.url}</p>
       </div>
 
       <button 
