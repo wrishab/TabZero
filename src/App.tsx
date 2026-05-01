@@ -11,7 +11,17 @@ import {
   Edit2,
   ChevronDown,
   ChevronUp,
-  X
+  X,
+  BookOpen,
+  Briefcase,
+  PlayCircle,
+  MessageCircle,
+  ShoppingBag,
+  Newspaper,
+  Wallet,
+  Code2,
+  Plane,
+  LayoutGrid
 } from 'lucide-react';
 
 // --- TYPES ---
@@ -59,6 +69,27 @@ export default function App() {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [organizedGroups, setOrganizedGroups] = useState<Record<string, { id: number, title: string, color: any }>>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (categoryId: string) => {
+    setCollapsedGroups(prev => ({ ...prev, [categoryId]: !prev[categoryId] }));
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'Study': return <BookOpen size={12} />;
+      case 'Work': return <Briefcase size={12} />;
+      case 'Entertainment': return <PlayCircle size={12} />;
+      case 'Social': return <MessageCircle size={12} />;
+      case 'Shopping': return <ShoppingBag size={12} />;
+      case 'News': return <Newspaper size={12} />;
+      case 'Finance': return <Wallet size={12} />;
+      case 'Developer': return <Code2 size={12} />;
+      case 'Travel': return <Plane size={12} />;
+      case 'AI': return <Sparkles size={12} />;
+      default: return <LayoutGrid size={12} />;
+    }
+  };
 
   // Chrome Extension Initialization
   useEffect(() => {
@@ -570,9 +601,12 @@ export default function App() {
                 >
                   {/* Active Tabs Review */}
                   <div className="mb-4">
-                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-2 text-left">Active Workspace</p>
+                    <div className="flex items-center gap-2 mb-3 ml-2">
+                       <LayoutGrid size={14} className="text-slate-400" />
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Active Workspace</p>
+                    </div>
 
-                    <div className="glass-card rounded-[20px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[240px] overflow-y-auto custom-scrollbar">
+                    <div className="glass-card rounded-[24px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[320px] overflow-y-auto custom-scrollbar border border-white/5 shadow-2xl">
                       <div className="divide-y divide-white/[0.03]">
                         {!isOrganized ? (
                           tabs.map((tab: Tab) => (
@@ -592,69 +626,113 @@ export default function App() {
                               <>
                                 {/* Pinned Section */}
                                 {tabs.filter(t => t.pinned).length > 0 && (
-                                  <div className="bg-white/[0.02]">
-                                    <div className="px-4 py-2 flex items-center gap-2 border-b border-white/[0.03]">
-                                      <Pin size={10} className="text-sky-400" />
-                                      <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Pinned</span>
+                                  <div className="bg-white/[0.02] group/pinned border-b border-white/[0.03]">
+                                    <div 
+                                      className="px-4 py-2 flex items-center justify-between hover:bg-white/[0.03] cursor-pointer transition-colors"
+                                      onClick={() => toggleGroup('Pinned')}
+                                    >
+                                      <div className="flex items-center gap-2.5">
+                                        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/10">
+                                          <Pin size={12} className="fill-current" />
+                                        </div>
+                                        <span className="text-[11px] font-bold tracking-wider text-slate-300">Pinned</span>
+                                        <span className="text-[9px] text-slate-500 font-bold ml-1">{tabs.filter(t => t.pinned).length}</span>
+                                      </div>
+                                      <ChevronDown size={14} className={`text-slate-500 transition-transform duration-300 ${collapsedGroups['Pinned'] ? 'rotate-180' : ''}`} />
                                     </div>
-                                    {tabs.filter(t => t.pinned).map(tab => (
-                                      <React.Fragment key={tab.id}>
-                                        <TabRow 
-                                          tab={tab} 
-                                          onTogglePin={handleTogglePin} 
-                                        />
-                                      </React.Fragment>
-                                    ))}
+                                    <AnimatePresence initial={false}>
+                                      {!collapsedGroups['Pinned'] && (
+                                        <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          className="overflow-hidden bg-black/20"
+                                        >
+                                          {tabs.filter(t => t.pinned).map(tab => (
+                                            <React.Fragment key={tab.id}>
+                                              <TabRow 
+                                                tab={tab} 
+                                                onTogglePin={handleTogglePin} 
+                                              />
+                                            </React.Fragment>
+                                          ))}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
                                   </div>
                                 )}
                                 {/* Categories */}
-                                {(Object.entries(grouped) as [string, Tab[]][]).map(([categoryId, groupTabs]) => (
-                                  <div key={categoryId}>
-                                    <div className="px-4 py-3 flex flex-col gap-2 border-b border-white/[0.03] bg-white/[0.01]">
-                                      <div className="flex items-center gap-2">
-                                        {organizedGroups[categoryId] ? (
-                                          <div className="flex flex-col gap-2 w-full">
-                                            <div className="flex items-center gap-2">
-                                              <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: UI_PALETTE[organizedGroups[categoryId].color as ChromeColor]?.hex || UI_PALETTE.grey.hex }} />
-                                              <input 
-                                                value={organizedGroups[categoryId].title}
-                                                onChange={(e) => handleUpdateGroup(categoryId, e.target.value, organizedGroups[categoryId].color)}
-                                                className="bg-transparent border-none text-[10px] font-bold tracking-wider text-slate-300 focus:outline-none focus:text-white transition-colors flex-1"
-                                                placeholder="Group Name"
-                                              />
-                                              <span className="text-[9px] text-slate-600 font-medium ml-auto flex items-center justify-center bg-white/[0.03] px-2 py-0.5 rounded-full border border-white/[0.05]">{groupTabs.length} tabs</span>
-                                            </div>
-                                            <div className="flex gap-1.5 ml-4">
-                                              {CHROME_COLORS.map(c => (
-                                                <button
-                                                  key={c}
-                                                  onClick={() => handleUpdateGroup(categoryId, organizedGroups[categoryId].title, c)}
-                                                  className={`w-2.5 h-2.5 rounded-full border ${organizedGroups[categoryId].color === c ? 'border-white scale-110 shadow-sm shadow-white/20' : 'border-transparent'} transition-all hover:scale-125`}
-                                                  style={{ backgroundColor: UI_PALETTE[c]?.hex }}
-                                                />
-                                              ))}
-                                            </div>
+                                {(Object.entries(grouped) as [string, Tab[]][]).map(([categoryId, groupTabs]) => {
+                                  const themeColor = (organizedGroups[categoryId]?.color as ChromeColor) || getCategoryColor(categoryId);
+                                  const uiColor = UI_PALETTE[themeColor] || UI_PALETTE.grey;
+                                  const isCollapsed = collapsedGroups[categoryId];
+
+                                  return (
+                                    <div key={categoryId} className="group/group">
+                                      <div 
+                                        className="px-4 py-2 flex items-center justify-between border-b border-white/[0.03] bg-white/[0.01] hover:bg-white/[0.03] cursor-pointer transition-colors group-hover/group:border-white/[0.05]"
+                                        onClick={() => toggleGroup(categoryId)}
+                                      >
+                                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                          <div className={`flex items-center justify-center w-6 h-6 rounded-lg shadow-inner border border-white/5`} style={{ backgroundColor: uiColor.hex + '33', color: uiColor.hex }}>
+                                            {getCategoryIcon(organizedGroups[categoryId]?.title || categoryId)}
                                           </div>
-                                        ) : (
-                                          <>
-                                            <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: UI_PALETTE[getCategoryColor(categoryId)]?.hex || UI_PALETTE.grey.hex }} />
-                                            <span className="text-[10px] font-bold tracking-wider text-slate-300">{categoryId}</span>
-                                            <span className="text-[9px] text-slate-600 font-medium ml-auto flex items-center justify-center bg-white/[0.03] px-2 py-0.5 rounded-full border border-white/[0.05]">{groupTabs.length} tabs</span>
-                                          </>
-                                        )}
+                                          
+                                          {organizedGroups[categoryId] ? (
+                                            <input 
+                                              value={organizedGroups[categoryId].title}
+                                              onClick={(e) => e.stopPropagation()}
+                                              onChange={(e) => handleUpdateGroup(categoryId, e.target.value, organizedGroups[categoryId].color)}
+                                              className="bg-transparent border-none text-[11px] font-bold tracking-wider text-slate-300 focus:outline-none focus:text-white transition-colors min-w-[50px] w-[80px]"
+                                              placeholder="Group"
+                                            />
+                                          ) : (
+                                            <span className="text-[11px] font-bold tracking-wider text-slate-300">{categoryId}</span>
+                                          )}
+                                          
+                                          <span className="text-[9px] text-slate-500 font-bold ml-1">{groupTabs.length}</span>
+                                        </div>
+
+                                        <div 
+                                          className="flex items-center gap-1.5 opacity-0 group-hover/group:opacity-100 transition-all px-2"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          {organizedGroups[categoryId] && CHROME_COLORS.map(c => (
+                                            <button
+                                              key={c}
+                                              onClick={() => handleUpdateGroup(categoryId, organizedGroups[categoryId].title, c)}
+                                              className={`w-2.5 h-2.5 rounded-full border ${organizedGroups[categoryId].color === c ? 'border-white scale-110 shadow-sm shadow-white/20' : 'border-transparent hover:scale-110 hover:border-white/50'} transition-all`}
+                                              style={{ backgroundColor: UI_PALETTE[c]?.hex }}
+                                            />
+                                          ))}
+                                        </div>
+
+                                        <ChevronDown size={14} className={`text-slate-500 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
                                       </div>
+
+                                      <AnimatePresence initial={false}>
+                                        {!isCollapsed && (
+                                          <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                          >
+                                            {groupTabs.map((tab: Tab) => (
+                                              <React.Fragment key={tab.id}>
+                                                <TabRow 
+                                                  tab={tab} 
+                                                  onTogglePin={handleTogglePin} 
+                                                  themeColor={themeColor}
+                                                />
+                                              </React.Fragment>
+                                            ))}
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
                                     </div>
-                                    {groupTabs.map((tab: Tab) => (
-                                      <React.Fragment key={tab.id}>
-                                        <TabRow 
-                                          tab={tab} 
-                                          onTogglePin={handleTogglePin} 
-                                          themeColor={(organizedGroups[categoryId]?.color as ChromeColor) || getCategoryColor(categoryId)}
-                                        />
-                                      </React.Fragment>
-                                    ))}
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </>
                             );
                           })()
@@ -669,8 +747,11 @@ export default function App() {
             {/* Saved Sessions */}
             {sessions.length > 0 && (
               <div className="w-full mt-6">
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-2 text-left">Saved Sessions</p>
-                <div className="glass-card rounded-[20px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[200px] overflow-y-auto custom-scrollbar">
+                <div className="flex items-center gap-2 mb-3 ml-2">
+                   <History size={14} className="text-slate-400" />
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Saved Sessions</p>
+                </div>
+                <div className="glass-card rounded-[24px] overflow-hidden divide-y divide-white/[0.03] text-left max-h-[240px] overflow-y-auto custom-scrollbar border border-white/5 shadow-2xl">
                   {sessions.map(session => (
                     <div key={session.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-all group">
                       <div className="flex-1 min-w-0 mr-4">
