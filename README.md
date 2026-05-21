@@ -35,7 +35,7 @@ No dashboards. No clutter. Just one action that works.
 - ⚡ One-click tab cleanup  
 - 🧠 Smart, simple grouping (Study, Work, Social, Entertainment etc)  
 - 🧹 Removes duplicate tabs  
-- 🎯 Distraction-free experience  
+- 🎯 You can also save a particular group of sites as a session so you can quickly open all sites at one click
 
 ---
 
